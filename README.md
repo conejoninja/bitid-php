@@ -7,7 +7,7 @@ Based on the work of [scintill/php-bitcoin-signature-routines](https://github.co
 
 Licensed under the Apache License, Version 2.0 (unless it's not compatible with the license of works used)
 
-*Bitcoin Authentication Open Protocol*
+**Bitcoin Authentication Open Protocol**
 
 Pure Bitcoin sites and applications shouldn’t have to rely on artificial identification methods such as usernames and passwords. BitID is an open protocol allowing simple and secure authentication using public-key cryptography.
 
@@ -17,3 +17,12 @@ Classical password authentication is an insecure process that could be solved wi
 
 https://github.com/bitid/bitid/blob/master/BIP_draft.md
 
+
+Notes
+=====
+
+* Pure PHP implementation, no need of **bitcoind**
+
+* GMP PHP extension is required
+
+* **isMessageSignatureValidSafe** is the same function as **isMessageSignatureValid** but the later with throw different exceptions on fail, while the former only return true/false
