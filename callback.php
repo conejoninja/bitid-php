@@ -15,36 +15,37 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-require_once dirname(__FILE__) . "/BitId.php";
-$bitid = new BitId();
-?>
-<!DOCTYPE html>
-<html>
-<head>
-    <title>BitID Open Protocol - Demonstration site</title>
-</head>
-<body>
+require_once dirname(__FILE__) . "/BitID.php";
+$bitid = new BitID();
 
-<div class="container">
-    <div class="tab-content">
-        <div class="tab-pane">
-            <div class="spacer40"></div>
-            <h3>This is the callback page</h3>
-            <ul>
-                <?php foreach($_POST as $k => $v) { ?>
-                    <li><?php echo $k . ' => ' . $v; ?></li>
-                <?php }; ?>
-            </ul>
-            <div class="spacer40"></div>
-            <h3>Is signature valid?</h3>
-            <p><?php echo $bitid->isMessageSignatureValidSafe($_POST['address'], $_POST['signature'], $_POST['message'])?'YES :D':'NO :('; ?></p>
-            <div class="spacer40"></div>
-            <h3>Extract nonce</h3>
-            <p><b><?php echo $bitid->extractNonce($_POST['message']); ?></b></p>
-            <div class="spacer40"></div>
-        </div>
-    </div>
-</div>
+$variables = $_POST;
 
-</body>
-</html>
+$post_data = json_decode(file_get_contents('php://input'), true);
+// SIGNED VIA PHONE WALLET (data is send as payload)
+if($post_data!==null) {
+    $variables = $post_data;
+}
+
+// ALL THOSE VARIABLES HAVE TO BE SANITIZED !
+
+$signValid = $bitid->isMessageSignatureValidSafe(@$variables['address'], @$variables['signature'], @$variables['uri'], true);
+$nonce = $bitid->extractNonce($variables['uri']);
+if($signValid) {
+    require_once dirname(__FILE__) . "/DAO.php";
+    $dao = new DAO();
+    $dao->update($nonce, $variables['address']);
+
+
+    // SIGNED VIA PHONE WALLET (data is send as payload)
+    if($post_data!==null) {
+        //DO NOTHING
+    } else {
+        // SIGNED MANUALLY (data is stored in $_POST+$_REQUEST vs payload)
+        // SHOW SOMETHING PRETTY TO THE USER
+        session_start();
+        $_SESSION['user_id'] = $variables['address'];
+        header("Location: user.php");
+    }
+
+
+}

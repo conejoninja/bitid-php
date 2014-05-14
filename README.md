@@ -18,11 +18,25 @@ Classical password authentication is an insecure process that could be solved wi
 https://github.com/bitid/bitid/blob/master/BIP_draft.md
 
 
+Installation
+============
+* Create a MySQL database, import struct.sql into it.
+* Configure database information in DAO.php
+* Configure server's url in index.php
+
+
 Notes
 =====
+* I tried to create a flexible library, some  work needs to be done to adapt it to your project
 
 * Pure PHP implementation, no need of **bitcoind**
 
 * GMP PHP extension is required
 
 * **isMessageSignatureValidSafe** is the same function as **isMessageSignatureValid** but the later with throw different exceptions on fail, while the former only return true/false
+
+* By default, it will only 1 user by ip to **try** login at the same time (once a user is logged, another user could start the login process), this example could be modify to allow several (no need to modify BitID)
+
+
+
+

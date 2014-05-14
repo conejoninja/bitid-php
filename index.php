@@ -15,9 +15,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-require_once dirname(__FILE__) . "/BitId.php";
-$bitid = new BitId();
-$bitid_uri = $bitid->buildURI('http://localhost/callback.php');
+// define your absolute url
+define('SERVER_URL', 'http://localhost/bitid-php/');
+
+// BitID is required for login (do not modify)
+// DAO could be replace by your CMS/FRAMEWORK database classes
+require_once dirname(__FILE__) . "/BitID.php";
+require_once dirname(__FILE__) . "/DAO.php";
+$bitid = new BitID();
+// generate a nonce
+$nonce = $bitid->generateNonce();
+// build uri with nonce, nonce is optional, but we pre-calculate it to avoid extracting it later
+$bitid_uri = $bitid->buildURI(SERVER_URL . 'callback.php', $nonce);
+
+// Insert nonce + IP in the database to avoid an attacker go and try several nonces
+// This will only allow one nonce per IP, but it could be easily modified to allow severals per IP
+// (this is deleted after an user successfully log in the system, so only will collide if two or more users try to log in at the same time)
+$dao = new DAO();
+$dao->insert($nonce, @$_SERVER['REMOTE_ADDR']);
 ?>
 <!DOCTYPE html>
 <html>
@@ -48,7 +63,7 @@ $bitid_uri = $bitid->buildURI('http://localhost/callback.php');
             <p>Cumbersome. Yep. Much better with a simple scan or click using a compatible wallet :)</p>
             <pre><?php echo $bitid_uri; ?></pre>
             <form method="post" action="callback.php" >
-                <input type="hidden" name="message" value="<?php echo $bitid_uri; ?>" />
+                <input type="hidden" name="uri" value="<?php echo $bitid_uri; ?>" />
                 <div class="form-group">
                     <label>Bitcoin address</label>
                     <input type="text" name="address" id="address" class="form-control" placeholder="Enter your public Bitcoin address" />
@@ -63,6 +78,21 @@ $bitid_uri = $bitid->buildURI('http://localhost/callback.php');
         </div>
     </div>
 </div>
+
+<script type="text/javascript">
+    setInterval(function() {
+        var r = new XMLHttpRequest();
+        r.open("POST", "<?php echo SERVER_URL; ?>ajax.php", true);
+        r.onreadystatechange = function () {
+            if (r.readyState != 4 || r.status != 200) return;
+            if(r.responseText!='false') {
+                window.location = '<?php echo SERVER_URL; ?>user.php';
+            }
+        };
+        r.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        r.send("nonce=<?php echo $nonce; ?>");
+    }, 3000);
+</script>
 
 </body>
 </html>

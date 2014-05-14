@@ -21,7 +21,10 @@ if (extension_loaded('gmp')) {
     die('GMP extension required.'); // It may be available in a package called "php5-gmp" or similar for your system
 }
 
-class BitId {
+/**
+ * Class BitID
+ */
+class BitID {
 
     private $_scheme = "bitid";
     private $_qrservice = "https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=";
@@ -45,12 +48,23 @@ class BitId {
 
     }
 
-    private function _generate_nonce($length = 16) {
+    /**
+     * Generate a nonce, random string
+     *
+     * @param int $length
+     * @return string
+     */
+    public function generateNonce($length = 16) {
         $dict = array_merge(range('a', 'z'), range('0', '9'), range('A', 'Z'));
         shuffle($dict);
-        return substr(hash('sha512', implode('', $dict)), 0, $length);
+        return substr(hash('sha512', mt_rand() . implode('', $dict)), 0, $length);
     }
 
+    /**
+     * Extract nonce from bitid url
+     * @param $uri
+     * @return string
+     */
     public function extractNonce($uri) {
         if(preg_match('/(&|\?)x=([^&]+)/', $uri . '&', $match)) {
             return $match[2];
@@ -58,14 +72,28 @@ class BitId {
         return '';
     }
 
+    /**
+     * Generate url for QR code
+     *
+     * @param $uri
+     * @return string
+     */
     public function qrCode($uri) {
-        return $this->_qrservice . $uri;
+        return $this->_qrservice . urlencode($uri);
     }
 
+    /**
+     * Generate bitid:// url for the callback
+     * If nonce is not provided, one will be generated
+     *
+     * @param $callback
+     * @param null $nonce
+     * @return string
+     */
     public function buildURI($callback, $nonce = null) {
         $this->_callback = $callback;
         if($nonce===null) {
-            $this->_nonce = $this->_generate_nonce();
+            $this->_nonce = $this->generateNonce();
         } else {
             $this->_nonce = $nonce;
         }
@@ -81,30 +109,58 @@ class BitId {
         return $this->_scheme . '://' . $this->_callback . '?x=' . $this->_nonce . (!$this->_secure?'&u=1':'');
     }
 
-    public function isAddressValid($address) {
+    /**
+     * Check if a Bitcoin address is valid or not
+     * $testnet is optional if you're using a testnet address, by default it will use the real blockchain
+     *
+     * @param $address
+     * @param bool $testnet
+     * @return bool
+     */
+    public function isAddressValid($address, $testnet = false) {
         try {
-            $address = $this->_base58check_decode($address);
+            $address = $this->_base58check_decode($address, $testnet);
         } catch(InvalidArgumentException $e) {
             return false;
         }
-        if (strlen($address) != 21 || $address[0] != "\x0") {
+        if (strlen($address) != 21 || ($address[0] != "\x0" && !$testnet) || ($address[0] != "\x6F" && $testnet)) {
             return false;
         }
         return true;
     }
 
-    public function isMessageSignatureValidSafe($address, $signature, $message) {
+    /**
+     * Same function as isMessageSignatureValid but will not throw any Exception
+     * only use this if you're a lazy developer that doesn't handle exceptions
+     *
+     * @param $address
+     * @param $signature
+     * @param $message
+     * @param bool $testnet
+     * @return bool
+     */
+    public function isMessageSignatureValidSafe($address, $signature, $message, $testnet = false) {
         try {
-            return $this->isMessageSignatureValid($address, $signature, $message);
+            return $this->isMessageSignatureValid($address, $signature, $message, $testnet);
         } catch(InvalidArgumentException $e) {
             return false;
         }
     }
 
-    public function isMessageSignatureValid($address, $signature, $message) {
+    /**
+     * Check if a signature is valid
+     *
+     * @param $address
+     * @param $signature
+     * @param $message
+     * @param bool $testnet
+     * @return bool
+     * @throws InvalidArgumentException
+     */
+    public function isMessageSignatureValid($address, $signature, $message, $testnet = false) {
         // extract parameters
-        $address = $this->_base58check_decode($address);
-        if (strlen($address) != 21 || $address[0] != "\x0") {
+        $address = $this->_base58check_decode($address, $testnet);
+        if (strlen($address) != 21 || ($address[0] != "\x0" && !$testnet) || ($address[0] != "\x6F" && $testnet)) {
             throw new InvalidArgumentException('invalid Bitcoin address');
         }
 
@@ -139,18 +195,35 @@ class BitId {
             $pubBinStr =	($this->_isBignumEven($point->getY()) ? "\x02" : "\x03") .
                 str_pad($this->_gmp2bin($point->getX()), 32, "\x00", STR_PAD_LEFT);
         }
-        $derivedAddress = "\x00". hash('ripemd160', hash('sha256', $pubBinStr, true), true);
+        if(!$testnet) {
+            $derivedAddress = "\x00". hash('ripemd160', hash('sha256', $pubBinStr, true), true);
+        } else {
+            $derivedAddress = "\x6F". hash('ripemd160', hash('sha256', $pubBinStr, true), true);
+        }
 
         return $address === $derivedAddress;
     }
 
+    /**
+     * @param $bnStr
+     * @return bool
+     */
     private function _isBignumEven($bnStr) {
         return (((int)$bnStr[strlen($bnStr)-1]) & 1) == 0;
     }
 
-    // based on bitcoinjs-lib's implementation
-    // and SEC 1: Elliptic Curve Cryptography, section 4.1.6, "Public Key Recovery Operation".
-    // http://www.secg.org/download/aid-780/sec1-v2.pdf
+    /**
+     * based on bitcoinjs-lib's implementation
+     * and SEC 1: Elliptic Curve Cryptography, section 4.1.6, "Public Key Recovery Operation".
+     * http://www.secg.org/download/aid-780/sec1-v2.pdf
+     *
+     * @param $r
+     * @param $s
+     * @param $e
+     * @param $recoveryFlags
+     * @param $G
+     * @return bool|PublicKey
+     */
     function _recoverPubKey($r, $s, $e, $recoveryFlags, $G) {
         $isYEven = ($recoveryFlags & 1) != 0;
         $isSecondKey = ($recoveryFlags & 2) != 0;
@@ -201,7 +274,13 @@ class BitId {
         return false;
     }
 
-    private function _base58check_decode($str) {
+    /**
+     * @param $str
+     * @param bool $testnet
+     * @return resource|string
+     * @throws InvalidArgumentException
+     */
+    private function _base58check_decode($str, $testnet = false) {
         // strtr thanks to https://github.com/prusnak/addrgen/blob/master/php/addrgen.php
         // ltrim because leading zeroes can mess up the parsing even if you specify the base..
         $v = gmp_init(ltrim(strtr($str,
@@ -213,7 +292,11 @@ class BitId {
             if ($str[$i] != '1') {
                 break;
             }
-            $v = "\x00" . $v;
+            if(!$testnet) {
+                $v = "\x00" . $v;
+            } else {
+                $v = "\x6F" . $v;
+            }
         }
 
         $checksum = substr($v, -4);
@@ -228,6 +311,11 @@ class BitId {
         return $v;
     }
 
+    /**
+     * @param $i
+     * @return string
+     * @throws InvalidArgumentException
+     */
     private function _numToVarIntString($i) {
         if ($i < 0xfd) {
             return chr($i);
@@ -240,6 +328,10 @@ class BitId {
         }
     }
 
+    /**
+     * @param $binStr
+     * @return resource
+     */
     private function _bin2gmp($binStr) {
         $v = gmp_init('0');
 
@@ -250,6 +342,10 @@ class BitId {
         return $v;
     }
 
+    /**
+     * @param $v
+     * @return string
+     */
     private function _gmp2bin($v) {
         $binStr = '';
 
