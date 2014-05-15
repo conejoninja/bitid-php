@@ -17,6 +17,11 @@ Classical password authentication is an insecure process that could be solved wi
 
 https://github.com/bitid/bitid/blob/master/BIP_draft.md
 
+Demo
+====
+
+http://vps.madriguera.me/bitid-php/ (very basic, be gentle)
+
 
 Installation
 ============
@@ -29,13 +34,13 @@ Notes
 =====
 * I tried to create a flexible library, some  work needs to be done to adapt it to your project
 
-* Pure PHP implementation, no need of **bitcoind**
+* Pure PHP implementation, no need of **bitcoind** (maybe add support for bitcoind in the future)
 
-* GMP PHP extension is required
+* GMP PHP extension is required (most shared hostings don't have it, another reason to implement bitcoind support)
 
-* **isMessageSignatureValidSafe** is the same function as **isMessageSignatureValid** but the later with throw different exceptions on fail, while the former only return true/false
+* **isMessageSignatureValidSafe** is the same function as **isMessageSignatureValid** but the later with throw different exceptions on fail, while the former only return true/false (only for lazy programmers that don't handle exceptions)
 
-* By default, it will only 1 user by ip to **try** login at the same time (once a user is logged, another user could start the login process), this example could be modify to allow several (no need to modify BitID)
+* By default, it will only allow 1 user by IP to **try** login at the same time (once a user is logged, another user could start the login process), this example could be modify to allow several (no need to modify BitID)
 
 
 
