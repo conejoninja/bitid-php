@@ -15,10 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-define('DB_HOST', '');
-define('DB_USER', '');
-define('DB_PASS', '');
-define('DB_NAME', '');
+require_once dirname(__FILE__) . "/config.php";
 
 // QUICK AND DIRTY DAO CLASS
 class DAO {

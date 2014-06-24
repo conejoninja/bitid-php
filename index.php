@@ -15,11 +15,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// define your absolute url
-define('SERVER_URL', 'http://localhost/bitid-php/');
 
 // BitID is required for login (do not modify)
 // DAO could be replace by your CMS/FRAMEWORK database classes
+require_once dirname(__FILE__) . "/config.php";
 require_once dirname(__FILE__) . "/BitID.php";
 require_once dirname(__FILE__) . "/DAO.php";
 $bitid = new BitID();

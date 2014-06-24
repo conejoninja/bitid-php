@@ -26,8 +26,7 @@ http://vps.madriguera.me/bitid-php/ (very basic, be gentle)
 Installation
 ============
 * Create a MySQL database, import struct.sql into it.
-* Configure database information in DAO.php
-* Configure server's url in index.php
+* Configure database information and server url in config.php
 
 
 Notes
