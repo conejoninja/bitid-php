@@ -39,7 +39,7 @@ class DAO {
      */
     public function insert($nonce, $ip) {
         $this->deleteIP($ip);
-        return $this->_mysqli->query(sprintf("INSERT INTO tbl_nonces (`s_ip`, `dt_datetime`, `s_nonce`) VALUES ('%s', '%s', '%s')", $ip, date('Y-m-d H:i:s'), $nonce));
+        return $this->_mysqli->query($this->_mysqli->real_escape_string(sprintf("INSERT INTO tbl_nonces (`s_ip`, `dt_datetime`, `s_nonce`) VALUES ('%s', '%s', '%s')", $ip, date('Y-m-d H:i:s'), $nonce)));
     }
 
     /**
@@ -50,7 +50,7 @@ class DAO {
      * @return bool|mysqli_result
      */
     public function update($nonce, $address) {
-        return $this->_mysqli->query(sprintf("UPDATE tbl_nonces SET s_address = '%s' WHERE s_nonce = '%s' ", $address, $nonce));
+        return $this->_mysqli->query($this->_mysqli->real_escape_string(sprintf("UPDATE tbl_nonces SET s_address = '%s' WHERE s_nonce = '%s' ", $address, $nonce)));
     }
 
     /**
@@ -60,7 +60,7 @@ class DAO {
      * @return bool|mysqli_result
      */
     public function delete($nonce) {
-        return $this->_mysqli->query(sprintf("DELETE FROM tbl_nonces WHERE s_nonce = '%s' ", $nonce));
+        return $this->_mysqli->query($this->_mysqli->real_escape_string(sprintf("DELETE FROM tbl_nonces WHERE s_nonce = '%s' ", $nonce)));
     }
 
     /**
@@ -70,7 +70,7 @@ class DAO {
      * @return bool|mysqli_result
      */
     public function deleteIP($ip) {
-        return $this->_mysqli->query(sprintf("DELETE FROM tbl_nonces WHERE s_ip = '%s' ", $ip));
+        return $this->_mysqli->query($this->_mysqli->real_escape_string(sprintf("DELETE FROM tbl_nonces WHERE s_ip = '%s' ", $ip)));
     }
 
     /**
@@ -81,7 +81,7 @@ class DAO {
      * @return bool
      */
     public function address($nonce, $ip) {
-        $result = $this->_mysqli->query(sprintf("SELECT * FROM tbl_nonces WHERE s_nonce = '%s' AND s_ip = '%s' LIMIT 1 ", $nonce, $ip));
+        $result = $this->_mysqli->query($this->_mysqli->real_escape_string(sprintf("SELECT * FROM tbl_nonces WHERE s_nonce = '%s' AND s_ip = '%s' LIMIT 1 ", $nonce, $ip)));
         if($result) {
             $row = $result->fetch_assoc();
             if(isset($row['s_address']) && $row['s_address']!='') {
@@ -99,7 +99,7 @@ class DAO {
      * @return bool
      */
     public function ip($nonce) {
-        $result = $this->_mysqli->query(sprintf("SELECT * FROM tbl_nonces WHERE s_nonce = '%s' LIMIT 1 ", $nonce));
+        $result = $this->_mysqli->query($this->_mysqli->real_escape_string(sprintf("SELECT * FROM tbl_nonces WHERE s_nonce = '%s' LIMIT 1 ", $nonce)));
         if($result) {
             $row = $result->fetch_assoc();
             if(isset($row['s_ip'])) {
