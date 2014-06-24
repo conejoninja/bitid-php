@@ -89,6 +89,17 @@ class DAO {
         return false;
     }
 
+	/**
+	 * Check if a nonce exists
+	 * @param $nonce
+	 * @return bool
+	 */
+	public function checkNonce($nonce) {
+		if($this->_mysqli->query($this->_mysqli->real_escape_string(sprintf("SELECT * FROM tbl_nonces WHERE s_nonce = '%s'", $nonce))))
+			return true;
+		return false;
+	}
+
     /**
      * Return IP by nonce, if you want to check that an IP could use this nonce
      *
