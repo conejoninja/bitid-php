@@ -55,9 +55,7 @@ class BitID {
      * @return string
      */
     public function generateNonce($length = 16) {
-        $dict = array_merge(range('a', 'z'), range('0', '9'), range('A', 'Z'));
-        shuffle($dict);
-        return substr(hash('sha512', mt_rand() . implode('', $dict)), 0, $length);
+        return bin2hex(openssl_random_pseudo_bytes($length));
     }
 
     /**
