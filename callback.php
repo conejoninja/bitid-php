@@ -16,7 +16,9 @@ limitations under the License.
 */
 
 require_once dirname(__FILE__) . "/BitID.php";
+require_once dirname(__FILE__) . "/DAO.php";
 $bitid = new BitID();
+$dao = new DAO();
 
 $variables = $_POST;
 
@@ -30,9 +32,7 @@ if($post_data!==null) {
 
 $signValid = $bitid->isMessageSignatureValidSafe(@$variables['address'], @$variables['signature'], @$variables['uri'], true);
 $nonce = $bitid->extractNonce($variables['uri']);
-if($signValid) {
-    require_once dirname(__FILE__) . "/DAO.php";
-    $dao = new DAO();
+if($signValid && $dao->checkNonce($nonce) && ($bitid->buildURI(SERVER_URL . 'callback.php', $nonce) === $variables['uri'])) {
     $dao->update($nonce, $variables['address']);
 
 

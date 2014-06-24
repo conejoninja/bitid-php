@@ -15,10 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-define('DB_HOST', '');
-define('DB_USER', '');
-define('DB_PASS', '');
-define('DB_NAME', '');
+require_once dirname(__FILE__) . "/config.php";
 
 // QUICK AND DIRTY DAO CLASS
 class DAO {
@@ -91,6 +88,17 @@ class DAO {
         }
         return false;
     }
+
+	/**
+	 * Check if a nonce exists
+	 * @param $nonce
+	 * @return bool
+	 */
+	public function checkNonce($nonce) {
+		if($this->_mysqli->query($this->_mysqli->real_escape_string(sprintf("SELECT * FROM tbl_nonces WHERE s_nonce = '%s'", $nonce))))
+			return true;
+		return false;
+	}
 
     /**
      * Return IP by nonce, if you want to check that an IP could use this nonce
