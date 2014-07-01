@@ -15,7 +15,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-
 // BitID is required for login (do not modify)
 // DAO could be replace by your CMS/FRAMEWORK database classes
 require_once dirname(__FILE__) . "/config.php";
@@ -31,7 +30,14 @@ $bitid_uri = $bitid->buildURI(SERVER_URL . 'callback.php', $nonce);
 // This will only allow one nonce per IP, but it could be easily modified to allow severals per IP
 // (this is deleted after an user successfully log in the system, so only will collide if two or more users try to log in at the same time)
 $dao = new DAO();
-$dao->insert($nonce, @$_SERVER['REMOTE_ADDR']);
+$result = $dao->insert($nonce, @$_SERVER['REMOTE_ADDR']);
+if(!$result)
+{
+	echo "<pre>";
+	echo "Database failer\n";
+	var_dump($dao);
+	die();
+}
 ?>
 <!DOCTYPE html>
 <html>
